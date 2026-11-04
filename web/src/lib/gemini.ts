@@ -33,7 +33,17 @@ function getClient(): GoogleGenAI {
   if (!client) {
     client = new GoogleGenAI({
       apiKey: config.geminiApiKey,
-      httpOptions: { timeout: config.geminiRequestTimeoutMs },
+      httpOptions: {
+        timeout: config.geminiRequestTimeoutMs,
+        retryOptions: {
+          attempts: 3,
+          initialDelay: 1,
+          maxDelay: 3,
+          expBase: 2,
+          jitter: 1,
+          httpStatusCodes: [500, 502, 503, 504],
+        },
+      },
     });
   }
 

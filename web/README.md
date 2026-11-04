@@ -78,6 +78,9 @@ Keep this path private and outside version control.
   output tokens; other answers allow 256 tokens. List prompts can include up
   to 12,000 characters so all fitting evidence items are available to
   generation.
+- Transient Gemini server errors (HTTP 500/502/503/504) are retried up to two
+  times with exponential backoff and jitter. A persistent provider outage still
+  requires waiting and retrying; quota errors remain explicit.
 - When changing to the Nomic task-prefixed embedding format, rebuild existing
   vectors once. With the app running, issue:
 
