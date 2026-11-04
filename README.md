@@ -204,6 +204,10 @@ the deferred security and operations work required for the intended deployment.
 These are technical recommendations, not claims that those evaluations or
 production controls have already been completed.
 
+## Demo video
+
+[Watch the Pagewise demo on Loom](https://www.loom.com/share/b49dbb62d9334aeebe915a79bec51952)
+
 ## Screenshots
 
 The demo screenshots use the supplied sample resume:
