@@ -18,6 +18,9 @@ evidence.
   send only the question and selected evidence excerpts to Gemini for answer
   generation.
 
+For the design decisions, implementation status, and clearly separated future
+work, see the [technical implementation plan](./IMPLEMENTATION_PLAN.md).
+
 ## Quick start
 
 ### Requirements
