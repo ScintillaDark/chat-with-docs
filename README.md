@@ -206,6 +206,8 @@ production controls have already been completed.
 
 ## Screenshots
 
-Add screenshots of the application with synthetic or redacted content before
-submission. Do not publish screenshots that reveal uploaded document names,
-personal information, API keys, or private answers.
+The demo screenshots use the supplied sample resume:
+
+![Grounded answer with supporting evidence](docs/screenshots/01-grounded-answer-with-evidence.png)
+
+![Grounded answer in the Pagewise workspace](docs/screenshots/02-grounded-answer-workspace.png)
