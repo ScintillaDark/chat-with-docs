@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+/data/
+/web/.next/
+/web/node_modules/
+/web/.env.local
+/web/coverage/
+/web/AGENTS.md
+/Assignment - AI FDE.docx
+/IMPLEMENTATION_PLAN.md
+/package-lock.json

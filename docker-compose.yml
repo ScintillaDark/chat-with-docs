@@ -1,0 +1,19 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: chatdocs
+      POSTGRES_USER: chatdocs
+      POSTGRES_PASSWORD: chatdocs
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - chatdocs-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatdocs -d chatdocs"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  chatdocs-postgres:
