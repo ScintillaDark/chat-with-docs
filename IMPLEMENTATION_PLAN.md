@@ -4,6 +4,36 @@
 > implementation checkpoint below is the source of truth for what is currently
 > implemented; production and OCR/vision sections are plans, not shipped
 > capabilities.
+> Other sections labeled future, target, or proposed—including testing,
+> security, observability, and scaling—are also proposals only. See the scope
+> summary immediately below for the deferred-capability list.
+
+## Scope and implementation status (read first)
+
+This is a single-user local demo, not a production deployment. The following
+boundary is intended to prevent roadmap material later in this document from
+being mistaken for shipped functionality.
+
+**Implemented:** PDF/TXT extraction for selectable text, page-aware prose/code
+chunking, local Ollama/Nomic embeddings, PostgreSQL vector plus full-text
+retrieval, bounded evidence context, Gemini structured answers, validated
+citations, abstention, and visible upload/query errors.
+
+| Deferred area | Not implemented in this submission |
+|---|---|
+| Scanned and visual documents | OCR, scanned-page handling, page rendering, diagram/image extraction, and vision-generated descriptions. |
+| Reserved schema fields | `partial` document status and OCR/visual evidence types exist in the schema, but current ingestion writes prose/code chunks and finishes as `ready` or `failed`. |
+| Identity and sharing | User accounts, authentication, per-user authorization, multi-tenant isolation, workspaces, and document sharing. |
+| Cloud and scale | Cloud deployment, durable queues/workers, distributed processing, autoscaling, and multi-region operation. |
+| Production security and operations | Malware scanning, WAF/rate and spend enforcement, managed cloud secrets, backup/restore drills, retention enforcement, deployment security gates, and production runbooks. |
+| Observability | OpenTelemetry traces, metrics, dashboards, and alerts; current logging is Pino-based. |
+| Automated quality gates | PostgreSQL integration-test harness, Playwright E2E suite, formal answer-quality evaluation set, load testing, and formal accessibility review. |
+| Product capabilities | Office documents, web crawling, audio, streaming answers, cross-question memory, and agent/tool workflows. |
+
+**Data flow:** original files, extraction, embeddings, and retrieval stay on the
+local machine. The current Gemini integration receives the question and
+selected evidence excerpts; it does not receive the original file or prior
+conversation transcript.
 
 ## 1. Goal
 
@@ -17,6 +47,7 @@ The initial release prioritizes a dependable end-to-end workflow and clear engin
 
 - Upload PDF and plain-text (`.txt`) documents.
 - Extract text and code while preserving useful structure, split content into appropriate chunks, and create embeddings.
+- Detect and preserve code-like blocks and line boundaries where extraction allows.
 - Support text-based PDFs and text files as the dependable ingestion baseline.
 - Store documents, chunks, and vectors for retrieval.
 - Ask questions against the uploaded collection.
@@ -27,7 +58,6 @@ The initial release prioritizes a dependable end-to-end workflow and clear engin
 
 ### Future enhancements (not currently implemented)
 
-- Preserve code indentation and line boundaries in `.txt` files and retain code-like blocks in PDFs where extraction allows.
 - For supported PDFs, extract embedded images or render pages when needed to capture diagrams; use a vision-capable model to create searchable, labeled descriptions.
 - Use OCR for scanned pages and image labels when feasible. Keep extracted text, OCR results, and generated visual descriptions distinct and traceable to their source page.
 - Treat scanned-document OCR and complex visual interpretation as best-effort enhancements. If time or provider limits threaten the core workflow, complete and verify text-based PDF/TXT RAG first, then add visual processing without claiming full visual coverage.

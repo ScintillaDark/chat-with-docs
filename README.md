@@ -21,6 +21,16 @@ evidence.
 For the design decisions, implementation status, and clearly separated future
 work, see the [technical implementation plan](./IMPLEMENTATION_PLAN.md).
 
+## Scope and deferred work
+
+This submission is a single-user local demo, not a production deployment.
+Scanned-PDF OCR, image/diagram understanding, authentication and multi-user
+access, cloud deployment, background workers, production security controls,
+OpenTelemetry dashboards/alerts, automated end-to-end tests, and a formal
+answer-quality evaluation are not implemented. See the plan's
+[implementation boundary](./IMPLEMENTATION_PLAN.md#scope-and-implementation-status-read-first)
+for the full list and current data-flow disclosure.
+
 ## Quick start
 
 ### Requirements
