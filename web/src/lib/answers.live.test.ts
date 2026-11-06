@@ -5,6 +5,10 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("./retrieval", () => ({
+  isEmploymentDurationQuestion: (question: string) =>
+    /\b(?:longest|shortest|maximum|max|minimum|min|most|least|duration|tenure)\b/i.test(
+      question,
+    ),
   retrieveEvidence: mocks.retrieveEvidence,
 }));
 
@@ -57,6 +61,41 @@ runLiveTest(
     expect(result.answer).toContain("Example Alpha Ltd");
     expect(result.answer).toContain("Example Beta Corp");
     expect(result.citations).toHaveLength(3);
+  },
+  120_000,
+);
+
+runLiveTest(
+  "identifies the longest employer tenure from synthetic date ranges",
+  async () => {
+    const question =
+      "what is the maximum duration experience company of the person";
+    mocks.retrieveEvidence.mockResolvedValue([
+      makeSyntheticEvidence(
+        "tenure-1",
+        "Staff DevOps Engineer Oct 2023 – Present\nApex FinTech Cloud Solutions",
+      ),
+      makeSyntheticEvidence(
+        "tenure-2",
+        "Senior DevOps Engineer Feb 2021 – Sep 2023\nHyperScale Systems Inc.",
+      ),
+      makeSyntheticEvidence(
+        "tenure-3",
+        "DevOps Engineer Jul 2018 – Jan 2021\nVanguard Digital Media",
+      ),
+      makeSyntheticEvidence(
+        "tenure-4",
+        "Systems Administrator Jun 2016 – Jun 2018\nNexus Software Labs",
+      ),
+    ]);
+
+    const result = await answerQuestion(
+      question,
+      "live-gemini-synthetic-tenure",
+    );
+
+    expect(result.insufficientEvidence).toBe(false);
+    expect(result.answer).toContain("Apex FinTech Cloud Solutions");
   },
   120_000,
 );

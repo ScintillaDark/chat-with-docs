@@ -10,6 +10,10 @@ vi.mock("@/lib/gemini", () => ({
 }));
 
 vi.mock("@/lib/retrieval", () => ({
+  isEmploymentDurationQuestion: (question: string) =>
+    /\b(?:longest|shortest|maximum|max|minimum|min|most|least|duration|tenure)\b/i.test(
+      question,
+    ),
   retrieveEvidence: mocks.retrieveEvidence,
 }));
 
@@ -147,6 +151,55 @@ describe("answerQuestion", () => {
     expect(result.answer).toContain("Example Beta Corp");
     expect(result.answer).toContain("Example Delta Technologies");
     expect(result.citations).toHaveLength(5);
+  });
+
+  it("instructs the model to compare employer date ranges", async () => {
+    const question =
+      "what is the maximum duration experience company of the person";
+    mocks.retrieveEvidence.mockResolvedValue([
+      {
+        ...makeEvidence(1),
+        content:
+          "Staff DevOps Engineer Oct 2023 – Present\nApex FinTech Cloud Solutions",
+      },
+      {
+        ...makeEvidence(2),
+        content:
+          "Senior DevOps Engineer Feb 2021 – Sep 2023\nHyperScale Systems Inc.",
+      },
+      {
+        ...makeEvidence(3),
+        content:
+          "DevOps Engineer Jul 2018 – Jan 2021\nVanguard Digital Media",
+      },
+      {
+        ...makeEvidence(4),
+        content:
+          "Systems Administrator Jun 2016 – Jun 2018\nNexus Software Labs",
+      },
+    ]);
+    mocks.generateGeminiJson.mockResolvedValue(
+      JSON.stringify({
+        answer: "Apex FinTech Cloud Solutions is ongoing since October 2023.",
+        citationKeys: ["S1"],
+        insufficientEvidence: false,
+      }),
+    );
+
+    await answerQuestion(question, "request-tenure-comparison");
+
+    const request = mocks.generateGeminiJson.mock.calls[0]?.[0];
+    expect(request?.systemInstruction).toContain(
+      "compare every supplied employment date range",
+    );
+    const prompt = JSON.parse(request?.userContent ?? "{}") as {
+      evidence: Array<{ text: string }>;
+    };
+    const evidenceText = prompt.evidence.map((item) => item.text).join("\n");
+    expect(evidenceText).toContain("Apex FinTech Cloud Solutions");
+    expect(evidenceText).toContain("HyperScale Systems Inc.");
+    expect(evidenceText).toContain("Vanguard Digital Media");
+    expect(evidenceText).toContain("Nexus Software Labs");
   });
 
   it("keeps concise-answer behavior for ordinary questions", async () => {
