@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import type { RankedChunk } from "./retrieval";
-import { fuseRankedEvidence } from "./retrieval";
+import {
+  fuseRankedEvidence,
+  isEmploymentDurationQuestion,
+} from "./retrieval";
 
 function makeCandidate(
   chunkId: string,
@@ -53,5 +56,23 @@ describe("fuseRankedEvidence", () => {
     );
 
     expect(fused[0]?.section).toBe("Professional Experience");
+  });
+});
+
+describe("isEmploymentDurationQuestion", () => {
+  it("recognizes comparative employer-tenure questions", () => {
+    expect(
+      isEmploymentDurationQuestion(
+        "what is the maximum duration experience company of the person",
+      ),
+    ).toBe(true);
+    expect(
+      isEmploymentDurationQuestion(
+        "Which company did they work at the longest?",
+      ),
+    ).toBe(true);
+    expect(isEmploymentDurationQuestion("What is the person's job title?")).toBe(
+      false,
+    );
   });
 });

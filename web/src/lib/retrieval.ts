@@ -71,6 +71,19 @@ const ignoredSearchTerms = new Set([
   "wise",
 ]);
 
+const employmentDateRangePattern = String.raw`(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{4}\s*(?:[-–—]|to)\s*(?:(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{4}|present|current)`;
+
+export function isEmploymentDurationQuestion(question: string): boolean {
+  return (
+    /\b(?:longest|shortest|maximum|max|minimum|min|most|least|duration|tenure)\b/i.test(
+      question,
+    ) &&
+    /\b(?:company|companies|employer|employment|experience|work history|worked|role|position)\b/i.test(
+      question,
+    )
+  );
+}
+
 function lexicalQuery(question: string): string {
   const terms = question
     .toLowerCase()
@@ -211,17 +224,52 @@ export async function retrieveEvidence(question: string): Promise<RetrievedChunk
     lexicalRows,
     config.retrievalCount,
   );
+  const timelineDocumentIds = [
+    ...new Set(fused.map((chunk) => chunk.documentId)),
+  ];
+  const timelineRows =
+    isEmploymentDurationQuestion(question) && timelineDocumentIds.length > 0
+      ? await db
+          .select({
+            chunkId: chunks.id,
+            documentId: documents.id,
+            filename: documents.originalFilename,
+            pageNumber: chunks.pageNumber,
+            contentType: chunks.contentType,
+            content: chunks.content,
+            section: chunks.section,
+          })
+          .from(chunks)
+          .innerJoin(documents, eq(chunks.documentId, documents.id))
+          .where(
+            and(
+              ...baseFilters,
+              inArray(documents.id, timelineDocumentIds),
+              sql`${chunks.content} ~* ${employmentDateRangePattern}`,
+            ),
+          )
+          .orderBy(asc(documents.originalFilename), asc(chunks.chunkIndex))
+      : [];
   const neighbors = await retrieveNeighbors(
     fused.slice(0, config.neighborExpansionSeeds),
     collection.id,
   );
-  const directIds = new Set(fused.map((chunk) => chunk.chunkId));
-  return [
+  const orderedEvidence: RetrievedChunk[] = [
+    ...timelineRows.map((row) => ({
+      ...row,
+      section: null,
+      similarity: 0,
+    })),
     ...fused.map(withoutRankingMetadata),
-    ...neighbors
-      .filter((chunk) => !directIds.has(chunk.chunkId))
-      .map(withoutRankingMetadata),
+    ...neighbors.map(withoutRankingMetadata),
   ];
+  const uniqueEvidence = new Map<string, RetrievedChunk>();
+  for (const chunk of orderedEvidence) {
+    if (!uniqueEvidence.has(chunk.chunkId)) {
+      uniqueEvidence.set(chunk.chunkId, chunk);
+    }
+  }
+  return [...uniqueEvidence.values()];
 }
 
 async function retrieveNeighbors(
